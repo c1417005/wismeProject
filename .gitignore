@@ -9,3 +9,5 @@ heroku-config-backup.txt
 config/settings.py
 **/__pycache__/
 wisme/migrations/
+CLAUDE.md
+scripts/
