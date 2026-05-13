@@ -6,7 +6,6 @@ db.sqlite3
 .github
 heroku-config-backup.txt
 .claude
-config/settings.py
 **/__pycache__/
 wisme/migrations/
 CLAUDE.md
