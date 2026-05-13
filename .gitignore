@@ -1,0 +1,11 @@
+.env
+.VSCodeCounter
+db.sqlite3
+.jpg
+.JPG
+.github
+heroku-config-backup.txt
+.claude
+config/settings.py
+**/__pycache__/
+wisme/migrations/

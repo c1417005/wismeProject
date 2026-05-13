@@ -1,0 +1,57 @@
+/* ============================================================
+   Wisme — Global Styles
+   Tailwind CSS handles most styling. This file covers:
+   - 3D flip card animation
+   - Skeleton UI pulse
+   - Allauth form overrides
+   ============================================================ */
+
+/* --- 3D Flip Card --- */
+.card-container {
+    perspective: 1000px;
+}
+.card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card.flipped {
+    transform: rotateY(180deg);
+}
+.card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+.card-back {
+    transform: rotateY(180deg);
+}
+
+/* --- Skeleton pulse (fallback for Tailwind animate-pulse) --- */
+@keyframes skeleton-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+}
+#search-skeleton > div {
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+/* --- django-allauth form overrides --- */
+.account-form input[type="text"],
+.account-form input[type="email"],
+.account-form input[type="password"] {
+    display: block;
+    width: 100%;
+    border: 1px solid #e7e5e4;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    background: #FAF8F4;
+    outline: none;
+}
+.account-form input:focus {
+    border-color: #a8a29e;
+}

@@ -1,0 +1,28 @@
+{% load i18n %}
+<div class="space-y-3">
+    <div class="flex gap-2">
+        <input type="text" id="{{ panel_id }}-word-input" placeholder="例: novel"
+               class="flex-1 min-w-0 border border-stone-200 rounded-lg px-3 py-2 text-sm bg-[#FAF8F4] outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100 transition-colors">
+        <button id="{{ panel_id }}-search-btn"
+                class="shrink-0 whitespace-nowrap bg-accent-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent-600 transition-colors inline-flex items-center gap-1.5">
+            <i data-lucide="search" class="w-3.5 h-3.5"></i>
+            {% trans "調べる" %}
+        </button>
+    </div>
+
+    <!-- スケルトン UI -->
+    <div id="{{ panel_id }}-skeleton" class="hidden space-y-2 animate-pulse">
+        <div class="h-3 bg-stone-200 rounded w-3/4"></div>
+        <div class="h-3 bg-stone-200 rounded w-full"></div>
+        <div class="h-3 bg-stone-200 rounded w-2/3"></div>
+    </div>
+
+    <!-- 自動紐付けインジケーター -->
+    <div id="{{ panel_id }}-indicator" class="hidden items-center gap-1.5 text-xs text-emerald-600">
+        <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+        {% trans "このメモに保存されました" %}
+    </div>
+
+    <!-- 検索結果リスト -->
+    <div id="{{ panel_id }}-results" class="space-y-3 max-h-72 overflow-y-auto"></div>
+</div>
