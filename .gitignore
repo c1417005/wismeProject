@@ -9,3 +9,4 @@ heroku-config-backup.txt
 **/__pycache__/
 CLAUDE.md
 scripts/
+development.txt
