@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    'rest_framework',
+    'corsheaders',
     'wisme.apps.WismeConfig',
     'encrypted_model_fields',
     'cloudinary_storage',
@@ -46,6 +48,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -211,3 +214,31 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
 LOGIN_URL = '/accounts/login/'
+
+
+# Django REST Framework
+# ADR 0001: SessionAuthentication を採用（既存 allauth のセッション Cookie をそのまま利用）
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+}
+
+
+# CORS / CSRF
+# 本番は同一オリジン配信のため CORS は不要。開発時のみ Vite の dev サーバーからのアクセスを許可する。
+CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[])
+CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[])
+
+if DEBUG:
+    # Vite のデフォルト dev サーバー（5173）からのアクセスを許可
+    _default_dev_origins = ['http://localhost:5173', 'http://127.0.0.1:5173']
+    CORS_ALLOWED_ORIGINS = CORS_ALLOWED_ORIGINS or _default_dev_origins
+    CSRF_TRUSTED_ORIGINS = CSRF_TRUSTED_ORIGINS or _default_dev_origins
+    # Cookie（セッション・CSRF）を別オリジンの fetch に乗せるために必要
+    CORS_ALLOW_CREDENTIALS = True

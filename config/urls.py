@@ -25,5 +25,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('i18n/', include('django.conf.urls.i18n')),
     path('accounts/', include('allauth.urls')),
+    path('api/v1/', include('wisme.api.urls')),
     path("wisme/", include("wisme.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
