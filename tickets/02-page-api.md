@@ -24,15 +24,15 @@ DELETE /api/v1/pages/{uuid}/           削除
 
 ## 受け入れ基準（DoD）
 
-- [ ] `wisme/api/serializers.py` に `PageSerializer`, `ChapterSerializer`, `PageDetailSerializer`（words含む）
-- [ ] `wisme/api/views.py` に `PageViewSet`（ModelViewSet）を実装
+- [x] `wisme/api/serializers.py` に `PageSerializer`, `ChapterSerializer`, `PageDetailSerializer`（words含む）
+- [x] `wisme/api/views.py` に `PageViewSet`（ModelViewSet）を実装
   - 自分のページのみ返す（`get_queryset` を owner でフィルタ）
   - `perform_create` で `owner=request.user` を設定
   - `perform_create` 後に `SearchedWord.objects.filter(note__isnull=True, owner=request.user).update(note=instance)` を実行（既存ロジック移植）
-- [ ] `chapters` を nested writable に対応（`drf-writable-nested` 採用 or 手動実装）
-- [ ] `picture` の multipart アップロードに対応（Cloudinary経由で保存）
-- [ ] 他人のページに対する取得・編集・削除が403になることをテスト
-- [ ] テスト: `wisme/tests/test_page_api.py`
+- [x] `chapters` を nested writable に対応（`drf-writable-nested` 採用 or 手動実装）
+- [x] `picture` の multipart アップロードに対応（Cloudinary経由で保存）
+- [x] 他人のページに対する取得・編集・削除が404になることをテスト（owner で queryset を絞るため、存在を漏らさない 404 を採用）
+- [x] テスト: `wisme/tests/test_page_api.py`
   - 一覧（自分のみ表示）
   - 作成（chapters あり/なし）
   - 作成時の未関連 SearchedWord 自動紐付け
@@ -62,3 +62,41 @@ DELETE /api/v1/pages/{uuid}/           削除
 
 - `Chapter.order` を hidden field として React 側で並び順管理する想定。サーバー側でも再採番してロバストにする
 - `picture` 更新時、旧画像の削除はCloudinaryStorageの挙動を確認（モデル側で `delete` をオーバーライド済みなので一旦そのまま）
+
+## 追加対応: 画像アップロードの分離
+
+### 背景
+
+現状は `POST/PATCH /api/v1/pages/` に multipart で `picture` と `chapters` を同時送信している。multipart はネスト配列を表現できないため `chapters` を JSON 文字列で送り、`PageSerializer.to_internal_value` で `json.loads` している。この変換がフロント・サーバー双方の複雑さの原因になっている。表紙画像は作成時に1回設定する程度で頻繁に変更されないため、ページ本体と画像の送信を分ける。
+
+### 方針
+
+ページ（+chapters）を JSON で先に保存し、返却された id に対して画像だけを multipart で送る。
+
+```
+POST   /api/v1/pages/                  作成（JSON のみ、chapters ネスト書き込み）
+PATCH  /api/v1/pages/{uuid}/           部分更新（JSON のみ）
+PUT    /api/v1/pages/{uuid}/picture/   表紙画像のアップロード／差し替え（multipart）
+DELETE /api/v1/pages/{uuid}/picture/   表紙画像の削除
+```
+
+画像を先に送る方式は採らない。保存先の Page が存在しない段階で画像を保持する一時モデル・所有者チェック・放置画像の掃除が新たに必要になるため。
+
+### 受け入れ基準（DoD）
+
+- [x] `PageViewSet.parser_classes` を `JSONParser` のみにする
+- [x] `PageViewSet` に `@action(detail=True, methods=['put', 'delete'], url_path='picture', parser_classes=[MultiPartParser])` を追加
+  - 権限は既存の `get_object()` + `IsOwner` を利用（他人のページは404）
+  - `PUT` は画像専用の Serializer（`picture` のみ）で検証・保存し、ページを返す
+  - `DELETE` は `picture` を空にする
+- [x] `PageSerializer` から `to_internal_value`（chapters の JSON 文字列変換）を削除
+- [x] `PageSerializer` の `picture` を read_only にする
+- [x] テスト更新: `wisme/tests/test_page_api.py`
+  - `test_upload_picture_with_chapters_as_json_string` を「JSON で作成 → picture エンドポイントにアップロード」の2段階テストに置き換え
+  - 画像の差し替え・削除
+  - 他人のページへの画像アップロードが404
+  - `/pages/` への multipart 送信が415になる
+
+### 影響
+
+- #08（ページフォームUI）: 保存時に ① ページを JSON で送信 → await → ② 画像があれば返却 id で picture エンドポイントへ送信。② が失敗してもページは保存済み（画像は任意項目）なので、画像のみ再送できる UI にする
